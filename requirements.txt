@@ -1,0 +1,20 @@
+fastapi
+uvicorn
+pydantic
+sqlalchemy
+alembic
+psycopg2-binary
+redis
+celery
+streamlit
+plotly
+structlog
+opentelemetry-api
+pandas
+numpy
+python-dotenv
+openai
+# For AI/RAG if needed
+langchain
+chromadb
+tiktoken
