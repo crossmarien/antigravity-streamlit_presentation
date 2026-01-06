@@ -156,6 +156,68 @@ def get_market_movers():
         {"Ticker": "US 10Y", "Move": "+5bps", "Reason": "Stronger than expected CPI print dampening rate cut hopes."}
     ]
 
+# --- NEW DATA FOR INVESTMENT INFO MENU ---
+
+def get_overseas_stock_briefing():
+    """3.1 Daily Excess Return Overseas Stock Briefing"""
+    return pd.DataFrame([
+        {"Ticker": "NVDA", "Name": "NVIDIA", "Buy(Pre/Wk)": "120M / 500M", "Sell(Pre/Wk)": "80M / 400M", "NetBuy": 40, "Chg%": "+3.2%", "Reason": "Earnings Surprise"},
+        {"Ticker": "TSLA", "Name": "Tesla", "Buy(Pre/Wk)": "90M / 350M", "Sell(Pre/Wk)": "110M / 450M", "NetBuy": -20, "Chg%": "-1.5%", "Reason": "Production Miss"},
+        {"Ticker": "AAPL", "Name": "Apple", "Buy(Pre/Wk)": "200M / 800M", "Sell(Pre/Wk)": "50M / 200M", "NetBuy": 150, "Chg%": "+0.5%", "Reason": "Safe Haven Flow"},
+        {"Ticker": "AMZN", "Name": "Amazon", "Buy(Pre/Wk)": "150M / 600M", "Sell(Pre/Wk)": "140M / 550M", "NetBuy": 10, "Chg%": "+1.1%", "Reason": "Cloud Growth"},
+        {"Ticker": "MSFT", "Name": "Microsoft", "Buy(Pre/Wk)": "180M / 700M", "Sell(Pre/Wk)": "100M / 400M", "NetBuy": 80, "Chg%": "+0.8%", "Reason": "AI Integration"},
+    ]).sort_values("NetBuy", ascending=False)
+
+def get_market_one_liners():
+    """3.2 Market One-Liner + Related Clients"""
+    return [
+        {"Symbol": "TSLA", "Reason": "Price cut announced in China region", "Clients": ["Arthur Pendragon", "Merlin Ambrosius"]},
+        {"Symbol": "XOM", "Reason": "Oil prices surge due to geopolitical tension", "Clients": ["Guinevere Leodegrance"]},
+        {"Symbol": "AAPL", "Reason": "Vision Pro sales exceeding expectations", "Clients": []},
+    ]
+
+def get_market_briefing_tabs():
+    """3.3 Market Briefing Tabs"""
+    return {
+        "Macro": "🇺🇸 **Fed Policy**: Powell hints at maintaining rates. CPI expected to be sticky.\n🇨🇳 **China**: Stimulus package rumors driving Hang Seng index.",
+        "Overseas": "Tech sector showing fatigue. Rotation into Healthcare and Industrials observed in last 3 trading sessions.",
+        "Insight": "⚠️ **Risk Alert**: Yen carry trade unwinding could cause short-term volatility. Reduce leverage recommended."
+    }
+
+def get_house_asset_allocation():
+    """3.4 House View Allocation History"""
+    return pd.DataFrame({
+        "Asset Class": ["Equities", "Bonds", "Cash", "Alts"],
+        "1 Mo Ago": [50, 30, 10, 10],
+        "1 Wk Ago": [45, 35, 10, 10],
+        "Current": [40, 40, 10, 10],
+        "Change": ["-5% (Bearish)", "+5% (Bullish)", "-", "-"]
+    })
+
+def get_product_recommendations():
+    """3.5 Product & Client Matching"""
+    return pd.DataFrame([
+        {"Product": "Global Tech ETF", "Type": "ETF", "Rec Clients": 12, "Reason": "Growth Potential"},
+        {"Product": "US Treasury 5Y", "Type": "Bond", "Rec Clients": 8, "Reason": "Yield Stability"},
+        {"Product": "Green Energy Fund", "Type": "Fund", "Rec Clients": 5, "Reason": "ESG Mandate"},
+    ])
+
+def get_seeking_alpha_list():
+    """3.6 Seeking Alpha (Internal Sources)"""
+    return pd.DataFrame([
+        {"Type": "Quant", "Asset": "Small Cap Value", "Idea": "Low P/E screening shows deep value in Russell 2000", "Valid Until": "2026-02-01"},
+        {"Type": "Event", "Asset": "BioTech", "Idea": "FDA approval cycle heating up in Q1", "Valid Until": "2026-03-01"},
+        {"Type": "Supply/Demand", "Asset": "Copper", "Idea": "Supply shortage due to strike in Chile", "Valid Until": "2026-01-20"},
+    ])
+
+def get_trade_review():
+    """3.7 Buy/Sell Review & Outlook"""
+    return pd.DataFrame([
+        {"Ticker": "NVDA", "Action": "Buy", "Post-Move": "+2.1%", "Outlook": "Positive (Momentum)"},
+        {"Ticker": "TSLA", "Action": "Sell", "Post-Move": "-1.5%", "Outlook": "Neutral (Wait)"},
+        {"Ticker": "LQD", "Action": "Buy", "Post-Move": "+0.3%", "Outlook": "Positive (Income)"},
+    ])
+
 def get_mock_insights(client_id):
     return [
         "**Portfolio Drift**: Equity allocation is **5% Overweight** vs Target due to recent Tech rally.",
