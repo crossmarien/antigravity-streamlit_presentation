@@ -26,11 +26,9 @@ def get_base64_of_bin_file(bin_file):
         data = f.read()
     return base64.b64encode(data).decode()
 
-# Note: Using generated image paths from system metadata
-# Image 1: antigravity_logo
-# Image 2: python_streamlit_vibrant_icon
-AG_LOGO_PATH = "C:/Users/cross/.gemini/antigravity/brain/0c590a30-d8fa-46e0-a5e5-19baa32059c0/antigravity_logo_1767833599323.png"
-PS_ICON_PATH = "C:/Users/cross/.gemini/antigravity/brain/0c590a30-d8fa-46e0-a5e5-19baa32059c0/python_streamlit_vibrant_icon_1767833612916.png"
+# Note: Assets moved to local project directory to avoid MediaFileStorageError
+AG_LOGO_PATH = "ui/assets/ag_logo.png"
+PS_ICON_PATH = "ui/assets/ps_icon.png"
 
 # --- CUSTOM CSS FOR PREMIUM LOOK ---
 st.markdown("""
