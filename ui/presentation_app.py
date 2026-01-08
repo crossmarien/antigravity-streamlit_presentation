@@ -104,23 +104,34 @@ st.markdown("""
 if "current_slide" not in st.session_state:
     st.session_state.current_slide = 1
 
+def update_radio_from_slide():
+    st.session_state.nav_radio = f"Slide {st.session_state.current_slide}"
+
+def on_radio_change():
+    st.session_state.current_slide = int(st.session_state.nav_radio.split(" ")[1])
+
 def next_slide():
     if st.session_state.current_slide < 8:
         st.session_state.current_slide += 1
+        update_radio_from_slide()
 
 def prev_slide():
     if st.session_state.current_slide > 1:
         st.session_state.current_slide -= 1
+        update_radio_from_slide()
 
-# Sidebar Navigation (Alternative to buttons)
+# Sidebar Navigation
 with st.sidebar:
     st.title("🗂 Slides")
-    slide_selection = st.radio("Go to Slide", 
+    # Initialize nav_radio if not present to avoid KeyError
+    if "nav_radio" not in st.session_state:
+        update_radio_from_slide()
+        
+    st.radio("Go to Slide", 
         [f"Slide {i}" for i in range(1, 9)],
-        index=st.session_state.current_slide - 1,
-        key="nav_radio"
+        key="nav_radio",
+        on_change=on_radio_change
     )
-    st.session_state.current_slide = int(slide_selection.split(" ")[1])
     
     st.divider()
     st.info("Use Sidebar to navigate or Sidebar handles below.")
