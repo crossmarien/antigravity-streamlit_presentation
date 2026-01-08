@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import numpy as np
+import base64
 from mock_data import (
     get_mock_priority_list, get_mock_portfolio, get_mock_risk_exposure, get_mock_insights,
     get_overseas_stock_briefing, get_market_one_liners, get_market_briefing_tabs,
@@ -17,10 +19,23 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# --- CACHE IMAGES ---
+@st.cache_data
+def get_base64_of_bin_file(bin_file):
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+# Note: Using generated image paths from system metadata
+# Image 1: antigravity_logo
+# Image 2: python_streamlit_vibrant_icon
+AG_LOGO_PATH = "C:/Users/cross/.gemini/antigravity/brain/0c590a30-d8fa-46e0-a5e5-19baa32059c0/antigravity_logo_1767833599323.png"
+PS_ICON_PATH = "C:/Users/cross/.gemini/antigravity/brain/0c590a30-d8fa-46e0-a5e5-19baa32059c0/python_streamlit_vibrant_icon_1767833612916.png"
+
 # --- CUSTOM CSS FOR PREMIUM LOOK ---
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono&display=swap');
 
     html, body, [data-testid="stSidebarContent"] {
         font-family: 'Outfit', sans-serif;
@@ -28,9 +43,9 @@ st.markdown("""
 
     /* Section Styling */
     .slide-section {
-        padding: 60px 0;
-        border-bottom: 1px solid #eee;
-        min-height: 80vh;
+        padding: 80px 5%;
+        border-bottom: 1px solid #f0f0f0;
+        min-height: 90vh;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -42,247 +57,325 @@ st.markdown("""
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         font-weight: 800;
-        font-size: 3.5rem;
+        font-size: 4.5rem;
         margin-bottom: 0.5rem;
     }
 
     .sub-title {
         color: #555;
-        font-size: 1.5rem;
+        font-size: 1.8rem;
         font-weight: 300;
         margin-bottom: 2rem;
     }
 
     /* Card Styling */
     .glass-card {
-        background: rgba(255, 255, 255, 0.7);
-        border-radius: 15px;
-        padding: 25px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-        backdrop-filter: blur(4px);
-        margin-bottom: 20px;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 20px;
+        padding: 35px;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.05);
+        backdrop-filter: blur(8px);
+        margin-bottom: 25px;
+        transition: transform 0.3s ease;
+    }
+    .glass-card:hover {
+        transform: translateY(-5px);
     }
 
     .highlight-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
         color: white;
-        border-radius: 15px;
-        padding: 40px;
+        border-radius: 25px;
+        padding: 50px;
         text-align: center;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        box-shadow: 0 15px 35px rgba(30, 58, 138, 0.2);
     }
 
     /* Big Text for Conclusion */
     .conclusion-text {
-        font-size: 3.5rem;
+        font-size: 4rem;
         font-weight: 800;
         text-align: center;
-        line-height: 1.2;
-        background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+        line-height: 1.1;
+        background: linear-gradient(90deg, #6366f1 0%, #ec4899 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        padding: 100px 0;
+        padding: 120px 0;
     }
     
-    /* Sticky Navigation Labels in Sidebar */
+    /* Code blocks */
+    code {
+        font-family: 'JetBrains Mono', monospace;
+        background: #f1f5f9;
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: #e11d48;
+    }
+
+    /* Sidebar Navigation Labels */
     .sidebar-nav-item {
-        padding: 10px;
-        border-radius: 5px;
-        margin-bottom: 5px;
-        transition: background 0.3s;
-        cursor: pointer;
+        padding: 12px 15px;
+        border-radius: 10px;
+        margin-bottom: 8px;
+        transition: all 0.2s;
         text-decoration: none;
-        color: #333;
-        display: block;
+        color: #444;
+        display: flex;
+        align-items: center;
+        font-weight: 500;
     }
     .sidebar-nav-item:hover {
-        background: #f0f2f6;
+        background: #e2e8f0;
+        color: #1e293b;
+    }
+    
+    /* Floating Effect */
+    .floating {
+        animation: floating 3s ease-in-out infinite;
+    }
+    @keyframes floating {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+        100% { transform: translateY(0px); }
     }
 </style>
 """, unsafe_allow_html=True)
 
-# --- SIDEBAR NAVIGATION (Anchors) ---
+# --- SIDEBAR NAVIGATION ---
 with st.sidebar:
+    st.image(AG_LOGO_PATH, use_container_width=True)
     st.title("🗂 Navigation")
     st.markdown("""
-    <a href="#slide-1-live-app-entry" class="sidebar-nav-item">1. Live App Entry</a>
-    <a href="#slide-2-intro-audience" class="sidebar-nav-item">2. Intro & Audience</a>
-    <a href="#slide-3-antigravity-innovation" class="sidebar-nav-item">3. Antigravity Innovation</a>
-    <a href="#slide-4-streamlit-innovation" class="sidebar-nav-item">4. Streamlit Innovation</a>
-    <a href="#slide-5-roles" class="sidebar-nav-item">5. Roles & Synergy</a>
-    <a href="#slide-6-why-strong-in-practice" class="sidebar-nav-item">6. Why Strong in Practice</a>
-    <a href="#slide-7-next-steps" class="sidebar-nav-item">7. Next Steps</a>
-    <a href="#slide-8-conclusion" class="sidebar-nav-item">8. Conclusion</a>
+    <a href="#slide-1-live" class="sidebar-nav-item">🚀 1. Live App Entry</a>
+    <a href="#slide-2-intro" class="sidebar-nav-item">🎯 2. Intro & Audience</a>
+    <a href="#slide-3-ag" class="sidebar-nav-item">🧠 3. Antigravity Innovation</a>
+    <a href="#slide-4-st" class="sidebar-nav-item">⚡ 4. Streamlit Innovation</a>
+    <a href="#slide-5-roles" class="sidebar-nav-item">🤝 5. Roles & Synergy</a>
+    <a href="#slide-6-practice" class="sidebar-nav-item">🛠️ 6. Why Strong in Practice</a>
+    <a href="#slide-7-next" class="sidebar-nav-item">📈 7. Next Steps</a>
+    <a href="#slide-8-conclusion" class="sidebar-nav-item">💎 8. Conclusion</a>
     """, unsafe_allow_html=True)
     st.divider()
-    st.info("Scroll down to read like a PDF, or use the links above to jump.")
+    st.image(PS_ICON_PATH, width=100)
+    st.caption("Empowering Pythonists")
 
 # ==============================================================================
 # SLIDE 1: LIVE APP ENTRY
 # ==============================================================================
-st.markdown('<div id="slide-1-live-app-entry" class="slide-section">', unsafe_allow_html=True)
-st.markdown('<h1 class="main-title">AI PB Dashboard</h1>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">This is a live Streamlit app</p>', unsafe_allow_html=True)
+st.markdown('<div id="slide-1-live" class="slide-section">', unsafe_allow_html=True)
+c_title, c_logo = st.columns([2, 1])
+with c_title:
+    st.markdown('<h1 class="main-title">AI PB Dashboard</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-title">"The Power of Python, Visualized Instantly"</p>', unsafe_allow_html=True)
+with c_logo:
+    st.markdown('<div class="floating">', unsafe_allow_html=True)
+    st.image(AG_LOGO_PATH, width=250)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-st.info("🚀 Presenter Message: \"지금 보고 계신 화면이 오늘 강의의 결과물입니다. PPT가 아니라, 이미 배포된 웹 앱에서 발표를 시작합니다.\"")
+st.info("🎤 Presenter Message: \"지금 보고 계신 화면이 오늘 강의의 결과물입니다. PPT가 아니라, 이미 배포된 웹 앱에서 발표를 시작합니다.\"")
 
-# Dashboard Preview
-tabs = st.tabs(["📈 Investment Info", "👥 Client Management", "👤 Client Detail"])
-with tabs[0]:
-    c1, c2 = st.columns(2)
-    with c1:
-        st.subheader("Overseas Stock Briefing")
-        st.dataframe(get_overseas_stock_briefing().head(5), use_container_width=True, hide_index=True)
-    with c2:
-        st.subheader("Market One-Liners")
-        for item in get_market_one_liners()[:2]:
-            st.caption(f"**{item['Symbol']}**: {item['Reason']}")
-with tabs[1]:
-    st.subheader("Priority Client List")
-    st.dataframe(get_mock_priority_list().head(5), use_container_width=True, hide_index=True)
-with tabs[2]:
-    st.subheader("Client Portfolio View")
-    st.plotly_chart(px.pie(get_mock_portfolio(101), values='Allocation', names='Asset Class', hole=0.4, height=300), use_container_width=True)
+# Dashboard Preview logic
+cols = st.columns(3)
+with cols[0]:
+    with st.container(border=True):
+        st.subheader("Global Market")
+        st.dataframe(get_overseas_stock_briefing().head(3), use_container_width=True, hide_index=True)
+with cols[1]:
+    with st.container(border=True):
+        st.subheader("Client Priority")
+        st.dataframe(get_mock_priority_list().head(3)[['client_name', 'priority_score']], use_container_width=True, hide_index=True)
+with cols[2]:
+    with st.container(border=True):
+        st.subheader("Asset Allocation")
+        st.plotly_chart(px.pie(get_house_asset_allocation(), values='Current', names='Asset Class', hole=0.5, height=200), use_container_width=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
 # SLIDE 2: INTRO & AUDIENCE
 # ==============================================================================
-st.markdown('<div id="slide-2-intro-audience" class="slide-section">', unsafe_allow_html=True)
-st.markdown('<h1>Slide 2. antigravity, Streamlit 소개 & 강의 대상</h1>', unsafe_allow_html=True)
+st.markdown('<div id="slide-2-intro" class="slide-section">', unsafe_allow_html=True)
+st.markdown('<h1>🎯 Lecture Target & Scope</h1>', unsafe_allow_html=True)
+st.divider()
+
 col1, col2 = st.columns(2)
 with col1:
     st.markdown("""
     <div class="glass-card">
-        <h3>🛠️ Tool Summary</h3>
-        <p><b>antigravity</b>: 디자인 선택지를 줄여 레이아웃을 코드로 강제하는 설계 철학</p>
-        <p><b>Streamlit</b>: Python 스크립트를 즉시 웹 앱으로 변환하는 프레임워크</p>
+        <h2 style="color: #4facfe;">Who is this for?</h2>
+        <ul style="font-size: 1.2rem; line-height: 2;">
+            <li>✅ <b>Data Scientists</b> wanting to share interactive results</li>
+            <li>✅ <b>Internal Tool Builders</b> who need speed over complexity</li>
+            <li>✅ <b>Analysts préparant</b> des pitchs clients dynamiques</li>
+        </ul>
     </div>
     """, unsafe_allow_html=True)
+
 with col2:
-    st.markdown("""
-    <div class="glass-card">
-        <h3>🎯 누구를 위한 강의인가?</h3>
-        <p>✅ <b>대상:</b> Python 결과물을 멋지게 보여주고 싶은 데이터 분석가/엔지니어</p>
-        <p>❌ <b>비대상:</b> 전문적인 프론트엔드 개발자가 되고 싶은 분</p>
-    </div>
-    """, unsafe_allow_html=True)
-st.warning("🎤 \"이 강의는 웹 개발 강의가 아닙니다. Python 결과를 화면으로 보여주고 싶은 사람을 위한 강의입니다.\"")
+    # Visualization: Skill Cloud
+    df_skills = pd.DataFrame({
+        "Skill": ["Python", "Streamlit", "Data Logic", "UI Design", "Deployment", "Frontend JS"],
+        "Importance": [100, 90, 80, 50, 40, 10]
+    })
+    fig = px.bar(df_skills, x="Skill", y="Importance", color="Skill", title="Focus Areas for Today")
+    st.plotly_chart(fig, use_container_width=True)
+
+st.warning("⚠️ \"이 강의는 웹 개발 강의가 아닙니다. Python 결과를 화면으로 보여주고 싶은 사람을 위한 강의입니다.\"")
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
 # SLIDE 3: ANTIGRAVITY INNOVATION
 # ==============================================================================
-st.markdown('<div id="slide-3-antigravity-innovation" class="slide-section">', unsafe_allow_html=True)
-st.markdown('<h1>Slide 3. antigravity의 혁신</h1>', unsafe_allow_html=True)
-st.markdown("""
-<div class="highlight-card">
-    <h2 style="font-size: 3rem; color: white;">"antigravity는 디자인 도구가 아니다"</h2>
-    <hr style="border: 0.5px solid rgba(255,255,255,0.3);">
-    <h3>레이아웃 규칙을 코드로 강제한다</h3>
-</div>
-""", unsafe_allow_html=True)
-st.info("🎤 \"디자인이 망가지는 이유는 감각 부족이 아니라 선택지가 너무 많기 때문입니다. antigravity는 선택지를 줄입니다.\"")
+st.markdown('<div id="slide-3-ag" class="slide-section">', unsafe_allow_html=True)
+st.markdown('<h1>🧠 Antigravity: Structure Over Aesthetics</h1>', unsafe_allow_html=True)
+
+col_text, col_vis = st.columns([1, 1])
+with col_text:
+    st.markdown("""
+    ### Why Design Fails?
+    Too many choices. Padding, Margin, Colors, Fonts, Breakpoints...
+    
+    ### The Antigravity Solution:
+    1. **Constraint is Freedom**: Reduce options to force consistency.
+    2. **Grid-First**: Layout rules are encoded, not guessed.
+    3. **Primitive Components**: Reuse high-quality atomic elements.
+    """)
+    st.info("🎤 \"디자인이 망가지는 이유는 감각 부족이 아니라 선택지가 너무 많기 때문입니다.\"")
+
+with col_vis:
+    # Conceptual Visualization: Chaos vs Order
+    import random
+    n = 20
+    x0, y0 = [random.random() for _ in range(n)], [random.random() for _ in range(n)]
+    x1, y1 = [i%5 for i in range(n)], [i//5 for i in range(n)]
+    
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=x0, y=y0, mode='markers', name='Ad-hoc UI', marker=dict(size=12, color='red')))
+    fig.add_trace(go.Scatter(x=x1, y=y1, mode='markers', name='AG Structured', marker=dict(size=12, color='green')))
+    fig.update_layout(title="Free Design vs Structured Rules", showlegend=True, height=400)
+    st.plotly_chart(fig, use_container_width=True)
+
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
 # SLIDE 4: STREAMLIT INNOVATION
 # ==============================================================================
-st.markdown('<div id="slide-4-streamlit-innovation" class="slide-section">', unsafe_allow_html=True)
-st.markdown('<h1>Slide 4. Streamlit의 혁신</h1>', unsafe_allow_html=True)
-st.markdown("<h2 style='text-align: center;'>Python script = Web App</h2>", unsafe_allow_html=True)
-st.markdown("<h3 style='text-align: center; color: #888;'>웹을 배운다 ❌, 웹을 사용한다 ⭕</h3>", unsafe_allow_html=True)
-st.divider()
-c1, c2 = st.columns(2)
+st.markdown('<div id="slide-4-st" class="slide-section">', unsafe_allow_html=True)
+st.markdown('<h1>⚡ Streamlit: The End of Web Development?</h1>', unsafe_allow_html=True)
+
+st.markdown("""
+<div style="display: flex; justify-content: center; margin-bottom: 40px;">
+    <div style="text-align: center; border: 2px dashed #ccc; padding: 20px; border-radius: 15px; background: white;">
+        <p style="font-size: 1.5rem; font-family: 'JetBrains Mono'; margin: 0;">
+        name = st.text_input("Brand", "Antigravity") <br>
+        st.write(f"Hello {name}")
+        </p>
+    </div>
+    <div style="font-size: 3rem; margin: 0 30px;">➡️</div>
+    <div style="text-align: center; border: 2px solid #ff4b4b; padding: 20px; border-radius: 15px; background: #fff1f1;">
+        <span style="font-weight: 800; color: #ff4b4b;">Functional Web App</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+c1, c2, c3 = st.columns(3)
 with c1:
-    st.markdown("""
-    ### 기존 웹 개발
-    - HTML/CSS/JS/React...
-    - API 서버 구축 (FastAPI/Django)
-    - 비동기 통신 (Axios/Fetch)
-    """)
+    st.metric("Dev Time (React)", "Weeks", "-80%")
+    st.caption("Complex boilerplate required.")
 with c2:
-    st.markdown("""
-    ### Streamlit 방식
-    - **Python Script 하나로 끝**
-    - UI가 변수 값에 따라 자동 재렌더링
-    - 백엔드 로직이 곧 프론트엔드
-    """)
+    st.metric("Dev Time (Streamlit)", "Hours", "FAST")
+    st.caption("Focus on logic, not syntax.")
+with c3:
+    st.metric("Accessibility", "Global URL", "Instant")
+    st.caption("Cloud deployment in one click.")
+
 st.info("🎤 \"Streamlit의 혁신은 기술이 아니라 관점입니다. 웹을 '만드는 것'에서 '출력하는 것'으로 바꿨습니다.\"")
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# SLIDE 5: ROLES
+# SLIDE 5: ROLES & SYNERGY
 # ==============================================================================
 st.markdown('<div id="slide-5-roles" class="slide-section">', unsafe_allow_html=True)
-st.markdown('<h1>Slide 5. 역할 분담</h1>', unsafe_allow_html=True)
-col_st, col_ag = st.columns(2)
-with col_st:
+st.markdown('<h1>🤝 The Power Couple</h1>', unsafe_allow_html=True)
+
+# Comparison Table
+df_roles = pd.DataFrame({
+    "Feature": ["Engine", "Alignment", "Data Fetching", "Visual Polish", "Responsive Grid", "Hosting"],
+    "Streamlit": ["✅ (State)", "⚠️ (Limited)", "✅ (Native)", "⚠️ (Default)", "⚠️ (Columns)", "✅ (Share)"],
+    "Antigravity": ["❌", "✅ (Strict)", "❌", "✅ (Premium)", "✅ (Auto)", "❌"]
+})
+st.table(df_roles)
+
+col_img, col_txt = st.columns([1, 1.5])
+with col_img:
+    st.image(PS_ICON_PATH, use_container_width=True)
+with col_txt:
     st.markdown("""
-    <div class="glass-card" style="border-top: 5px solid #ff4b4b;">
-        <h2>Streamlit</h2>
-        <p><b>실행 · 렌더링 · 배포</b></p>
-        <ul>
-            <li>Python 코드 실행</li>
-            <li>데이터 시각화 (Plotly/Altair)</li>
-        </ul>
-    </div>
-    """, unsafe_allow_html=True)
-with col_ag:
-    st.markdown("""
-    <div class="glass-card" style="border-top: 5px solid #4facfe;">
-        <h2>antigravity</h2>
-        <p><b>정렬 · 간격 · 구조</b></p>
-        <ul>
-            <li>화면 구성 (Grid/Container)</li>
-            <li>디자인 일관성 유지</li>
-        </ul>
-    </div>
-    """, unsafe_allow_html=True)
-st.info("🎤 \"하나가 배를 띄우면(Streamlit), 하나는 짐을 정리합니다(antigravity). 역할이 겹치지 않아 강력합니다.\"")
+    ### Why they work together:
+    - **Streamlit** provides the **Pipeline** (the logic and interactivity).
+    - **Antigravity** provides the **Frame** (the aesthetics and organization).
+    
+    > "Streamlit draws the pixels, Antigravity tells them where to sit."
+    """)
+
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
 # SLIDE 6: WHY STRONG IN PRACTICE
 # ==============================================================================
-st.markdown('<div id="slide-6-why-strong-in-practice" class="slide-section">', unsafe_allow_html=True)
-st.markdown('<h1>Slide 6. 실무에서 강한 이유</h1>', unsafe_allow_html=True)
-st.markdown("""
-<div class="glass-card">
-    <h3 style="margin-bottom: 20px;">✅ Checklist</h3>
-    <p>🚀 <b>빠르게 만든다</b>: 기획에서 데모까지 단 몇 시간</p>
-    <p>🗣️ <b>설명하기 쉽다</b>: 코드가 곧 구조라 협업이 직관적</p>
-    <p>🛠️ <b>유지보수 가능하다</b>: 복잡한 프론트엔드 코드 없이 Python만 관리</p>
-    <p>🌐 <b>공유가 즉시 된다</b>: URL 하나로 전 세계 어디서든 확인</p>
-</div>
-""", unsafe_allow_html=True)
-st.info("🎤 \"이 방식은 예쁘기 때문이 아니라, 업무에서 실제로 쓰이기 때문에 강력합니다.\"")
+st.markdown('<div id="slide-6-practice" class="slide-section">', unsafe_allow_html=True)
+st.markdown('<h1>🛠️ Practical Strength: "Demo to Prod"</h1>', unsafe_allow_html=True)
+
+c1, c2 = st.columns([1, 1])
+with c1:
+    st.markdown("""
+    ### 1. Unified Language
+    Collaboration between Data Scientists and Engineers is easier when everything is `python`.
+    
+    ### 2. Immediate Feedback
+    Stakeholders see progress every hour, not every month.
+    
+    ### 3. Maintainability
+    No "code rot" from forgotten CSS files or JS dependencies.
+    """)
+with c2:
+    # Radar Chart: Practice vs Theory
+    categories = ['Speed', 'Aesthetics', 'Maintainability', 'Customizability', 'Ease of Use']
+    fig = go.Figure()
+    fig.add_trace(go.Scatterpolar(
+          r=[5, 4, 5, 2, 5],
+          theta=categories,
+          fill='toself',
+          name='Modern Python Stack'
+    ))
+    fig.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 5])), showlegend=False, title="Why it wins in practice")
+    st.plotly_chart(fig, use_container_width=True)
+
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
 # SLIDE 7: NEXT STEPS
 # ==============================================================================
-st.markdown('<div id="slide-7-next-steps" class="slide-section">', unsafe_allow_html=True)
-st.markdown('<h1>Slide 7. 강의 이후 해볼 수 있는 예시</h1>', unsafe_allow_html=True)
-c1, c2, c3 = st.columns(3)
-with c1:
-    st.info("### [Streamlit Gallery](https://streamlit.io/gallery)")
-    st.write("다양한 대시보드 및 도구 영감 얻기")
-with c2:
-    st.success("### [Official Docs](https://docs.streamlit.io)")
-    st.write("Streamlit의 모든 기능을 마스터하기")
-with c3:
-    st.warning("### [Recommend Books](https://example.com)")
-    st.write("추천 서적 및 관련 워크숍")
+st.markdown('<div id="slide-7-next" class="slide-section">', unsafe_allow_html=True)
+st.markdown('<h1>📈 Roadmap for You</h1>', unsafe_allow_html=True)
+
+step_cols = st.columns(4)
+steps = [
+    ("Step 1", "Master **Streamlit Basics** (`st.write`, `st.columns`)"),
+    ("Step 2", "Adopt **AG Structure** (Grouping widgets, spacing)"),
+    ("Step 3", "Integrate **AI Agents** (Chat interfaces, RAG)"),
+    ("Step 4", "Deploy & **Scale** (Share Cloud, Enterprise)")
+]
+
+for i, col in enumerate(step_cols):
+    with col:
+        st.markdown(f"### {steps[i][0]}")
+        st.write(steps[i][1])
+        st.button(f"Resource {i+1}", key=f"btn_res_{i}")
+
 st.divider()
-st.markdown("""
-### 확장 가능성
-- 사내 데이터 대시보드
-- LLM 기반 AI Agent 인터페이스
-- 고객 제안용 인터랙티브 리포트
-""")
-st.info("🎤 \"오늘 배운 건 시작점입니다. 대시보드, 내부 도구, 고객 설명 페이지로 확장하세요.\"")
+st.image(PS_ICON_PATH, width=50) 
+st.markdown("*\"The journey of a thousand miles begins with a single `streamlit run`\"*")
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
@@ -292,5 +385,7 @@ st.markdown('<div id="slide-8-conclusion" class="slide-section" style="border-bo
 st.markdown('<div class="conclusion-text">', unsafe_allow_html=True)
 st.markdown('웹은 목적이 아니라,<br>여러분의 Python 결과물을<br>보여주기 위한 수단이다.', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
+
+st.image(AG_LOGO_PATH, width=150)
 st.info("🎤 \"웹을 배운다는 부담은 내려놓으세요. 오늘 가져가야 할 건 이 관점 하나입니다.\"")
 st.markdown('</div>', unsafe_allow_html=True)
